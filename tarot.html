@@ -285,7 +285,17 @@
       <p class="lead">具体的にお聞きになるほど、深い示唆を受け取れます。</p>
     </div>
     <div class="panel">
-      <textarea id="questionInput" placeholder="例：今の仕事を続けるべきか、転職したほうがいいか迷っています。"></textarea>
+      <textarea
+        id="questionInput"
+        autocomplete="off"
+        autocapitalize="sentences"
+        autocorrect="on"
+        spellcheck="false"
+        name="user-question"
+        data-1p-ignore="true"
+        data-lpignore="true"
+        inputmode="text"
+        placeholder="例：今の仕事を続けるべきか、転職したほうがいいか迷っています。"></textarea>
       <p class="field-hint">曖昧な問いより、はっきりした問いの方が、カードはより深く応えてくれます。<br>空欄のままでも大丈夫です。そのときは「今日のあなたに必要なメッセージ」としてお伝えします。</p>
     </div>
     <button class="btn btn-main" onclick="go('draw'); prepareDraw();">カードへ進む</button>
