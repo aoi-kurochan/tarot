@@ -113,12 +113,18 @@
 
   /* ===== 質問入力 ===== */
   .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px; margin: 0 0 24px; }
-  textarea {
+  /* 質問入力：iOS Safariの補助バー回避のため contenteditable div を使用 */
+  #questionInput {
     width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--card-pure);
     color: var(--text); font-family: var(--serif); font-size: 16px; line-height: 1.8; padding: 16px;
-    resize: vertical; min-height: 120px; letter-spacing: 0.04em;
+    min-height: 120px; letter-spacing: 0.04em; outline: none;
+    -webkit-user-modify: read-write-plaintext-only; word-break: break-word; white-space: pre-wrap;
   }
-  textarea:focus { outline: none; border-color: var(--gold); }
+  #questionInput:empty::before {
+    content: attr(data-placeholder);
+    color: var(--muted); pointer-events: none;
+  }
+  #questionInput:focus { border-color: var(--gold); }
   .field-hint { font-size: 13px; color: var(--sub); font-weight: 300; margin: 12px 2px 0; line-height: 1.7; }
 
   /* ===== カードを引く ===== */
@@ -285,17 +291,19 @@
       <p class="lead">具体的にお聞きになるほど、深い示唆を受け取れます。</p>
     </div>
     <div class="panel">
-      <textarea
+      <div
         id="questionInput"
-        autocomplete="off"
+        contenteditable="true"
+        data-placeholder="お聞きになりたいことを書いてください（例：転職するべきか迷っています）"
+        role="textbox"
+        aria-multiline="true"
+        inputmode="text"
+        enterkeyhint="done"
         autocapitalize="sentences"
         autocorrect="on"
         spellcheck="false"
-        name="user-question"
         data-1p-ignore="true"
-        data-lpignore="true"
-        inputmode="text"
-        placeholder="例：今の仕事を続けるべきか、転職したほうがいいか迷っています。"></textarea>
+        data-lpignore="true"></div>
       <p class="field-hint">曖昧な問いより、はっきりした問いの方が、カードはより深く応えてくれます。<br>空欄のままでも大丈夫です。そのときは「今日のあなたに必要なメッセージ」としてお伝えします。</p>
     </div>
     <button class="btn btn-main" onclick="go('draw'); prepareDraw();">カードへ進む</button>
@@ -426,14 +434,14 @@ function detectTheme(questionText) {
 // ===== スプレッド選択 =====
 function chooseSpread(spreadId) {
   state.spread = spreadId; state.question = "";
-  document.getElementById("questionInput").value = "";
+  document.getElementById("questionInput").innerText = "";
   go("question");
 }
 
 // ===== 引く準備 =====
 // スプレッド×テーマ×日付で既存リーディングがあれば、同じ3枚を再表示（引き直し不可）。
 function prepareDraw() {
-  state.question = document.getElementById("questionInput").value.trim();
+  state.question = document.getElementById("questionInput").innerText.trim();
   state.theme = detectTheme(state.question);
   state.rkey = readingKey(state.spread, state.theme);
   document.getElementById("drawSpreadLabel").textContent = positionFrames[state.spread].label;
