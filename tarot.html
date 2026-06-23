@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#f8f1e4">
+<title>タロット占い</title>
+
+<!-- 明朝（占いらしい品格）。オフラインでは游明朝などにフォールバック -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+<style>
+  /* ===== ジャパンディ・上品・占い感の配色 ===== */
+  :root {
+    --bg:        #f8f1e4;  /* クリーム背景 */
+    --card:      #fdf9f0;  /* オフホワイトのカード面 */
+    --card-pure: #ffffff;
+    --section:   #e8dcc5;  /* サンドベージュ */
+    --gold:      #b8956a;  /* 金茶（アクセント1） */
+    --gold-d:    #8b7355;  /* 深いベージュ（アクセント2） */
+    --text:      #3d3528;  /* 深い茶色（純黒は使わない） */
+    --sub:       #6b5a47;  /* 中間茶 */
+    --muted:     #a8836d;  /* 控えめ */
+    --line:      #e2d4bd;  /* 細い金茶系の罫線 */
+    --shadow:    0 4px 24px rgba(60, 50, 35, 0.08);
+    --shadow-lg: 0 8px 32px rgba(60, 50, 35, 0.15);
+    --radius: 16px;
+    --serif: 'Noto Serif JP', '游明朝', 'Yu Mincho', 'YuMincho', 'Hiragino Mincho ProN', serif;
+  }
+
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: var(--serif);
+    font-weight: 400;
+    background-color: var(--bg);
+    /* 紙のテクスチャ：ごく淡いノイズ＋やわらかなradial */
+    background-image:
+      radial-gradient(circle at 20% 15%, rgba(255,255,255,0.5), transparent 45%),
+      radial-gradient(circle at 85% 80%, rgba(184,149,106,0.06), transparent 50%);
+    background-attachment: fixed;
+    color: var(--text);
+    font-size: 16px;
+    line-height: 1.9;
+    min-height: 100vh;
+    letter-spacing: 0.04em;
+  }
+  /* 紙ノイズのオーバーレイ */
+  body::before {
+    content: ""; position: fixed; inset: 0; z-index: 0; pointer-events: none; opacity: 0.5;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.035'/%3E%3C/svg%3E");
+  }
+  .wrap { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 24px calc(56px + env(safe-area-inset-bottom)); }
+
+  .screen { display: none; animation: fade .6s ease; }
+  .screen.active { display: block; }
+  @keyframes fade { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+  /* ===== ヘッダー（細線の三日月SVG＋明朝タイトル） ===== */
+  .brand { text-align: center; margin-bottom: 40px; }
+  .brand svg { display: block; margin: 0 auto 18px; }
+  h1.title {
+    font-size: 28px; font-weight: 400; margin: 0 0 12px;
+    letter-spacing: 0.5em; text-indent: 0.5em; color: var(--gold-d);
+  }
+  .subcopy { color: var(--sub); font-size: 15px; font-weight: 300; margin: 0; letter-spacing: 0.08em; }
+
+  /* ===== ボタン ===== */
+  .btn {
+    display: block; width: 100%; max-width: 360px; margin: 0 auto;
+    font-family: var(--serif); cursor: pointer; transition: transform .15s ease, box-shadow .25s ease, background .25s;
+  }
+  .btn-main {
+    background: linear-gradient(180deg, #f0e6d2, #e0d3b8);
+    border: 1px solid var(--gold);
+    color: var(--text);
+    padding: 17px 40px; border-radius: 4px;
+    letter-spacing: 0.4em; text-indent: 0.4em; font-size: 16px; font-weight: 500;
+    box-shadow: 0 3px 14px rgba(184,149,106,0.25);
+  }
+  .btn-main:hover { background: linear-gradient(180deg, #f3eadb, #ddcfb0); box-shadow: 0 5px 18px rgba(184,149,106,0.35); }
+  .btn-main:active { transform: scale(0.98); }
+  .btn-line {
+    background: transparent; border: 1px solid var(--line); color: var(--gold-d);
+    padding: 14px 30px; border-radius: 4px; letter-spacing: 0.3em; text-indent: 0.3em; font-size: 14.5px;
+  }
+  .btn-line:hover { border-color: var(--gold); background: rgba(184,149,106,0.05); }
+  .linkbtn {
+    background: none; border: none; color: var(--gold-d); font-family: var(--serif);
+    font-size: 14px; cursor: pointer; padding: 10px; letter-spacing: 0.08em;
+    border-bottom: 1px solid transparent;
+  }
+  .linkbtn:hover { border-bottom-color: var(--gold); }
+  .btn + .btn { margin-top: 14px; }
+
+  .sec-head { text-align: center; margin: 0 0 32px; }
+  .sec-head h2 { font-size: 21px; font-weight: 500; margin: 0 0 10px; color: var(--gold-d); letter-spacing: 0.14em; }
+  .sec-head .lead { font-size: 14.5px; color: var(--sub); font-weight: 300; margin: 0; letter-spacing: 0.06em; }
+
+  .topbar { display: flex; align-items: center; min-height: 28px; margin-bottom: 16px; }
+
+  /* ===== スプレッド選択 ===== */
+  .spread-card {
+    text-align: left; background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 24px; margin-bottom: 18px; cursor: pointer;
+    box-shadow: var(--shadow); transition: transform .18s ease, box-shadow .25s ease, border-color .25s;
+  }
+  .spread-card:hover { transform: scale(1.015); box-shadow: var(--shadow-lg); border-color: var(--gold); }
+  .spread-card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 500; color: var(--gold-d); letter-spacing: 0.1em; }
+  .spread-card p { margin: 0; font-size: 14px; color: var(--sub); font-weight: 300; }
+
+  /* ===== 質問入力 ===== */
+  .panel { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px; margin: 0 0 24px; }
+  textarea {
+    width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--card-pure);
+    color: var(--text); font-family: var(--serif); font-size: 16px; line-height: 1.8; padding: 16px;
+    resize: vertical; min-height: 120px; letter-spacing: 0.04em;
+  }
+  textarea:focus { outline: none; border-color: var(--gold); }
+  .field-hint { font-size: 13px; color: var(--sub); font-weight: 300; margin: 12px 2px 0; line-height: 1.7; }
+
+  /* ===== カードを引く ===== */
+  .deck-area { display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; margin: 36px 0 12px; min-height: 210px; }
+  .tcard { width: 30%; max-width: 168px; min-width: 96px; aspect-ratio: 2 / 3; perspective: 1000px; cursor: pointer; }
+  .tcard-inner { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; transition: transform .8s cubic-bezier(.4,.1,.3,1); }
+  .tcard.flipped .tcard-inner { transform: rotateY(180deg); }
+  .tcard.glow .tcard-inner { box-shadow: 0 0 28px rgba(184,149,106,0.6); }
+  .tcard-face { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 10px; overflow: hidden; }
+  /* 裏面：金茶の細フレーム＋静かな紋様 */
+  .tcard-back {
+    background:
+      radial-gradient(circle at 50% 38%, rgba(253,249,240,0.18) 0 1px, transparent 2px),
+      linear-gradient(160deg, #cdb188 0%, #b8956a 55%, #8b7355 100%);
+    border: 1px solid var(--gold-d);
+    box-shadow: var(--shadow-lg);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .tcard-back::after {
+    content: ""; width: 58%; height: 78%; border: 1px solid rgba(253,249,240,0.55); border-radius: 6px;
+    background:
+      radial-gradient(circle at 50% 30%, rgba(253,249,240,0.85) 0 2px, transparent 3px),
+      radial-gradient(circle at 50% 50%, rgba(253,249,240,0.0) 0 10px, rgba(253,249,240,0.35) 11px 12px, transparent 13px);
+  }
+  /* 表面：金線フレーム */
+  .tcard-front { transform: rotateY(180deg); background: var(--card); border: 1px solid var(--gold); padding: 6px; box-shadow: var(--shadow-lg); }
+  .tcard-front img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 4px; }
+  .tcard-front img.reversed { transform: rotate(180deg); }
+
+  @keyframes deal { from { opacity: 0; transform: translateY(16px) scale(.96); } to { opacity: 1; transform: none; } }
+  .tcard.dealing { animation: deal .6s ease both; }
+  .tcard.dealing:nth-child(2) { animation-delay: .12s; }
+  .tcard.dealing:nth-child(3) { animation-delay: .24s; }
+
+  .tap-hint { text-align: center; color: var(--sub); font-size: 13.5px; font-weight: 300; margin: 6px 0 0; min-height: 22px; letter-spacing: 0.06em; }
+
+  /* ===== 結果 ===== */
+  .q-quote { text-align: center; font-size: 15px; color: var(--sub); font-weight: 300; line-height: 1.9; margin: 0 0 36px; }
+  .q-quote .q-text { color: var(--gold-d); font-weight: 500; }
+
+  .result-card { padding: 0 0 30px; margin: 0 0 30px; border-bottom: 1px solid var(--line); }
+  .result-card:last-of-type { border-bottom: none; }
+  .rc-pos { text-align: center; font-size: 13.5px; color: var(--gold); letter-spacing: 0.28em; text-indent: 0.28em; margin: 0 0 18px; font-weight: 400; }
+  .rc-imgwrap { width: 152px; margin: 0 auto 18px; }
+  .rc-img { width: 100%; aspect-ratio: 2/3; border: 1px solid var(--gold); background: var(--card); padding: 7px; border-radius: 8px; box-shadow: var(--shadow-lg); cursor: zoom-in; transition: transform .2s ease; }
+  .rc-img:hover { transform: scale(1.02); }
+  .rc-img img { width: 100%; height: 100%; object-fit: cover; display: block; border-radius: 3px; }
+  .rc-img img.reversed { transform: rotate(180deg); }
+  .rc-name { text-align: center; font-size: 18px; font-weight: 500; margin: 0 0 6px; color: var(--text); letter-spacing: 0.08em; }
+  .rc-orient { display: block; text-align: center; font-size: 12px; color: var(--muted); margin: 0 0 18px; letter-spacing: 0.16em; }
+  .rc-interp { font-size: 15px; line-height: 2.0; margin: 0; color: var(--text); font-weight: 400; text-indent: 1em; }
+
+  .summary { background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 28px 26px; margin: 8px 0 24px; box-shadow: var(--shadow); }
+  .summary h3 { margin: 0 0 14px; font-size: 16px; color: var(--gold-d); font-weight: 500; letter-spacing: 0.16em; text-align: center; }
+  .summary p { margin: 0; font-size: 14.5px; line-height: 2.0; color: var(--text); font-weight: 400; }
+
+  .consult { text-align: center; background: var(--section); border: 1px solid var(--line); border-radius: var(--radius); padding: 30px 26px; margin: 0 0 24px; }
+  .consult h3 { font-size: 16px; color: var(--gold-d); margin: 0 0 10px; font-weight: 500; letter-spacing: 0.14em; }
+  .consult p.lead { font-size: 13.5px; color: var(--sub); font-weight: 300; margin: 0 0 20px; line-height: 1.9; }
+
+  /* 履歴 */
+  .hist-item { text-align: left; background: var(--card); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px 20px; margin-bottom: 14px; cursor: pointer; box-shadow: var(--shadow); transition: border-color .25s, transform .18s ease; }
+  .hist-item:hover { border-color: var(--gold); transform: scale(1.01); }
+  .hi-date { font-size: 12.5px; color: var(--muted); margin: 0 0 5px; letter-spacing: 0.08em; }
+  .hi-spread { font-size: 15.5px; font-weight: 500; color: var(--gold-d); margin: 0 0 5px; letter-spacing: 0.08em; }
+  .hi-cards { font-size: 13px; color: var(--sub); font-weight: 300; margin: 0; }
+  .empty { text-align: center; color: var(--sub); font-size: 14px; font-weight: 300; padding: 40px 10px; line-height: 1.9; }
+
+  /* フッター注意（控えめに1行） */
+  .footer-note { text-align: center; font-size: 11.5px; color: var(--muted); font-weight: 300; margin-top: 44px; letter-spacing: 0.08em; }
+
+  /* トースト */
+  .toast { position: fixed; left: 50%; bottom: 44px; transform: translateX(-50%) translateY(12px); background: rgba(61,53,40,0.95); color: #fdf9f0; padding: 13px 24px; border-radius: 6px; font-size: 13.5px; z-index: 90; opacity: 0; transition: opacity .3s, transform .3s; pointer-events: none; max-width: 90%; text-align: center; letter-spacing: 0.04em; border: 1px solid rgba(184,149,106,0.5); }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* 拡大モーダル */
+  .modal { position: fixed; inset: 0; background: rgba(45,38,28,0.85); z-index: 100; display: none; align-items: center; justify-content: center; padding: 28px; }
+  .modal.show { display: flex; }
+  .modal img { max-width: 100%; max-height: 86vh; border: 2px solid var(--gold); border-radius: 8px; box-shadow: 0 12px 48px rgba(0,0,0,0.5); }
+  .modal img.reversed { transform: rotate(180deg); }
+
+  /* ロック画面 */
+  .lock { text-align: center; padding: 70px 26px; }
+  .lock h1 { font-size: 22px; color: var(--gold-d); font-weight: 500; letter-spacing: 0.12em; }
+  .lock p { color: var(--sub); font-size: 14.5px; font-weight: 300; line-height: 1.9; }
+
+  @media (min-width: 600px) { .tcard { width: 168px; } }
+
+  /* 総括：4セクション構造 */
+  .sum-sec { margin: 0 0 20px; }
+  .sum-sec:last-child { margin-bottom: 0; }
+  .sum-sec h4 { font-size: 13px; color: var(--gold); letter-spacing: 0.18em; margin: 0 0 9px; font-weight: 600; padding-left: 12px; border-left: 2px solid var(--gold); }
+  .sum-sec p { margin: 0; font-size: 14.5px; line-height: 2.05; color: var(--text); font-weight: 400; }
+
+  /* リセットメニュー（⋯） */
+  .menu-wrap { position: relative; margin-left: auto; }
+  .menu-btn { background: none; border: none; color: var(--gold-d); font-size: 22px; cursor: pointer; padding: 2px 10px; line-height: 1; font-family: var(--serif); letter-spacing: 0.1em; }
+  .menu-btn:hover { color: var(--gold); }
+  .menu-pop { position: absolute; right: 0; top: 32px; background: var(--card-pure); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow-lg); padding: 6px; display: none; z-index: 50; min-width: 240px; }
+  .menu-pop.show { display: block; }
+  .menu-pop button { display: block; width: 100%; text-align: left; background: none; border: none; color: var(--text); font-family: var(--serif); font-size: 13.5px; padding: 12px 14px; cursor: pointer; border-radius: 7px; letter-spacing: 0.04em; line-height: 1.6; }
+  .menu-pop button:hover { background: rgba(184,149,106,0.08); }
+
+  /* 今日のリーディング・バナー */
+  .today-banner { text-align: center; background: var(--section); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 18px; margin: 0 0 8px; font-size: 13.5px; color: var(--gold-d); font-weight: 500; letter-spacing: 0.04em; line-height: 1.8; }
+</style>
+</head>
+<body>
+
+<!-- ソフト鍵ロック画面 -->
+<div id="lockScreen" class="wrap" style="display:none;">
+  <div class="lock panel">
+    <h1>鍵が必要です</h1>
+    <p>このタロット占いは、有料note内のリンクからお開きください。<br>お待ちしています。</p>
+  </div>
+</div>
+
+<!-- アプリ本体 -->
+<div id="app" class="wrap" style="display:none;">
+
+  <!-- 【1】オープニング -->
+  <section id="screen-opening" class="screen active">
+    <div class="brand">
+      <!-- 細線の三日月（金色） -->
+      <svg width="52" height="52" viewBox="0 0 52 52" fill="none" aria-hidden="true">
+        <path d="M34 6 a21 21 0 1 0 12 33 A17 17 0 1 1 34 6 Z" fill="none" stroke="#b8956a" stroke-width="1.2"/>
+        <circle cx="40.5" cy="14" r="1" fill="#b8956a"/>
+      </svg>
+      <h1 class="title">タロット占い</h1>
+      <p class="subcopy">あなたの問いに、78枚のカードがそっと寄り添います</p>
+    </div>
+    <button class="btn btn-main" onclick="go('spread')">占いを始める</button>
+    <div style="text-align:center; margin-top:18px;">
+      <button class="linkbtn" onclick="openHistory()">過去のリーディングを見る</button>
+    </div>
+  </section>
+
+  <!-- 【2】スプレッド選択 -->
+  <section id="screen-spread" class="screen">
+    <div class="topbar"><button class="linkbtn" onclick="go('opening')">← もどる</button></div>
+    <div class="sec-head">
+      <h2>カードの並べ方をお選びください</h2>
+      <p class="lead">気になるものを、ひとつお選びください。</p>
+    </div>
+    <div class="spread-card" onclick="chooseSpread('past_present_future')">
+      <h3>過去・現在・未来</h3>
+      <p>これまでの流れと、これから訪れるものを見わたしたいときに。</p>
+    </div>
+    <div class="spread-card" onclick="chooseSpread('cause_current_action')">
+      <h3>原因・現状・対策</h3>
+      <p>もやもやの奥にあるものと、これからの一歩を知りたいときに。</p>
+    </div>
+    <div class="spread-card" onclick="chooseSpread('self_other_relation')">
+      <h3>自分・相手・関係</h3>
+      <p>誰かとの間にある気持ちを、見つめたいときに。</p>
+    </div>
+  </section>
+
+  <!-- 【3】質問入力 -->
+  <section id="screen-question" class="screen">
+    <div class="topbar"><button class="linkbtn" onclick="go('spread')">← もどる</button></div>
+    <div class="sec-head">
+      <h2>お聞きになりたいことを、お書きください</h2>
+      <p class="lead">具体的にお聞きになるほど、深い示唆を受け取れます。</p>
+    </div>
+    <div class="panel">
+      <textarea id="questionInput" placeholder="例：今の仕事を続けるべきか、転職したほうがいいか迷っています。"></textarea>
+      <p class="field-hint">曖昧な問いより、はっきりした問いの方が、カードはより深く応えてくれます。<br>空欄のままでも大丈夫です。そのときは「今日のあなたに必要なメッセージ」としてお伝えします。</p>
+    </div>
+    <button class="btn btn-main" onclick="go('draw'); prepareDraw();">カードへ進む</button>
+  </section>
+
+  <!-- 【4】カードを引く -->
+  <section id="screen-draw" class="screen">
+    <div class="topbar"><button class="linkbtn" onclick="go('question')">← もどる</button></div>
+    <div class="sec-head">
+      <h2 id="drawSpreadLabel">カードをひく</h2>
+      <p class="lead" id="drawLead">深く息を吸って、心が整ったら。</p>
+    </div>
+    <div id="drawBanner"></div>
+    <div id="drawStart" style="margin-top:24px;">
+      <button class="btn btn-main" onclick="shuffleAndDeal()">3枚をひく</button>
+    </div>
+    <div id="deckArea" class="deck-area"></div>
+    <p id="tapHint" class="tap-hint"></p>
+    <div id="toResultSlot" style="margin-top:20px;"></div>
+  </section>
+
+  <!-- 【5】結果 -->
+  <section id="screen-result" class="screen">
+    <div class="topbar"><button class="linkbtn" onclick="go('opening')">← トップへ</button>
+      <div class="menu-wrap">
+        <button class="menu-btn" onclick="toggleMenu(event)" aria-label="メニュー">⋯</button>
+        <div id="resultMenu" class="menu-pop">
+          <button onclick="resetToday()">今日のリーディングをすべてリセット</button>
+        </div>
+      </div>
+    </div>
+    <div class="sec-head">
+      <h2 id="resultSpreadLabel">リーディング</h2>
+    </div>
+    <p class="q-quote" id="qQuote"></p>
+    <div id="resultCards"></div>
+    <div class="summary">
+      <h3>3枚から見えること</h3>
+      <div id="summaryText"></div>
+    </div>
+    <div class="consult">
+      <h3>もっと深く相談したい方へ</h3>
+      <p class="lead">この結果をそのまま無料のAI「Claude」に伝えると、もう少し深く、相談に乗ってもらえます。</p>
+      <button class="btn btn-main" onclick="copyConsult()">Claude（無料AI）に相談する文をコピー</button>
+    </div>
+    <button class="btn btn-line" onclick="goAnotherTheme()">別のテーマで占う</button>
+  </section>
+
+  <!-- 【6】履歴 -->
+  <section id="screen-history" class="screen">
+    <div class="topbar"><button class="linkbtn" onclick="go('opening')">← トップへ</button></div>
+    <div class="sec-head">
+      <h2>これまでのリーディング</h2>
+      <p class="lead">そっと振り返りたいときに。</p>
+    </div>
+    <div id="historyList"></div>
+  </section>
+
+</div>
+
+<div id="toast" class="toast"></div>
+<div id="modal" class="modal" onclick="closeModal()"><img id="modalImg" src="" alt=""></div>
+
+<script src="tarot_data.js"></script>
+<script>
+/* ============================================================
+   タロット占い（あおいの声・標準語版）
+   ・外部API不使用／localStorageで当日24h固定＋履歴
+   ・質問→67テーマ判定→テーマ別解釈の呼応
+   ・正逆はCSSのrotate(180deg)で表現
+   ============================================================ */
+
+// ===== ソフト鍵（葵さんが後で変更可） =====
+const SOFT_KEY = "aoi2026";
+function gatePassed() {
+  const params = new URLSearchParams(location.search);
+  if (params.has("key")) return params.get("key") === SOFT_KEY;
+  const local = location.protocol === "file:" || ["localhost","127.0.0.1"].includes(location.hostname);
+  return local;
+}
+if (gatePassed()) document.getElementById("app").style.display = "block";
+else document.getElementById("lockScreen").style.display = "block";
+
+// ===== ポジションのキーとタイトル（スプレッドごと） =====
+const POS = {
+  past_present_future: [["past","過去のあなたへ"],["present","今のあなたに"],["future","これから訪れるもの"]],
+  cause_current_action: [["cause","原因"],["current","現状"],["action","対策"]],
+  self_other_relation: [["self","あなた自身"],["other","相手の心"],["relation","二人の関係"]]
+};
+
+// ===== localStorage =====
+const STORE_KEY = "tarot_app_v3";
+function loadDB() { try { return JSON.parse(localStorage.getItem(STORE_KEY)) || {daily:{},history:[]}; } catch(e){ return {daily:{},history:[]}; } }
+function saveDB(db) { try { localStorage.setItem(STORE_KEY, JSON.stringify(db)); } catch(e){} }
+function todayStr() { const d=new Date(), z=n=>String(n).padStart(2,"0"); return d.getFullYear()+"-"+z(d.getMonth()+1)+"-"+z(d.getDate()); }
+
+// ===== 質問正規化・リーディングキー・ハッシュ選択 =====
+// 一文字違い・コピペ・言い換えで引き直せないよう、スプレッド×テーマ×日付で固定する。
+function normalizeQuestion(q){ return (q||"").trim().replace(/[\s　、。,.\-「」『』（）()！!？?…・]/g,"").toLowerCase(); }
+function readingKey(spread, theme, date){ return (date||todayStr())+"|"+spread+"|"+theme; }
+function hashStr(s){ let h=0x811c9dc5; for(let i=0;i<s.length;i++){ h^=s.charCodeAt(i); h=Math.imul(h,0x01000193);} return h>>>0; }
+function pickFrom(arr, seed){ return arr[hashStr(seed)%arr.length]; }
+
+// ===== 画面遷移 =====
+function go(name) {
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById("screen-"+name).classList.add("active");
+  window.scrollTo({top:0, behavior:"smooth"});
+}
+
+// ===== 状態 =====
+let state = { spread:null, question:"", theme:"general", rkey:null, cards:[], flipped:[false,false,false] };
+
+// ===== テーマ判定（最多マッチ採用） =====
+function detectTheme(questionText) {
+  if (!questionText || questionText.trim()==="") return "general";
+  const normalized = questionText.toLowerCase().replace(/[\s　]/g,"");
+  let best="general", bestCount=0;
+  for (const [theme,keywords] of Object.entries(themeKeywords)) {
+    if (theme==="general") continue;
+    let count=0;
+    for (const kw of keywords) { if (normalized.includes(kw.toLowerCase())) count++; }
+    if (count>bestCount) { best=theme; bestCount=count; }
+  }
+  return best;
+}
+
+// ===== スプレッド選択 =====
+function chooseSpread(spreadId) {
+  state.spread = spreadId; state.question = "";
+  document.getElementById("questionInput").value = "";
+  go("question");
+}
+
+// ===== 引く準備 =====
+// スプレッド×テーマ×日付で既存リーディングがあれば、同じ3枚を再表示（引き直し不可）。
+function prepareDraw() {
+  state.question = document.getElementById("questionInput").value.trim();
+  state.theme = detectTheme(state.question);
+  state.rkey = readingKey(state.spread, state.theme);
+  document.getElementById("drawSpreadLabel").textContent = positionFrames[state.spread].label;
+  document.getElementById("deckArea").innerHTML = "";
+  document.getElementById("tapHint").textContent = "";
+  document.getElementById("toResultSlot").innerHTML = "";
+  document.getElementById("drawBanner").innerHTML = "";
+  state.flipped = [false,false,false];
+
+  const db = loadDB();
+  const existing = db.daily[state.rkey];
+  if (existing) {
+    // 既存（同テーマは1日1回）。質問文だけ最新に更新して表示。
+    state.cards = existing.cards;
+    existing.question = state.question; existing.theme = state.theme; saveDB(db);
+    state.flipped = [true,true,true];
+    document.getElementById("drawStart").style.display = "none";
+    document.getElementById("drawLead").textContent = "このテーマの、今日のリーディングです。";
+    document.getElementById("drawBanner").innerHTML =
+      '<div class="today-banner">今日はこのテーマで、すでにカードを引いています。<br>同じ3枚を、もう一度ご覧いただけます。</div>';
+    const area = document.getElementById("deckArea"); area.innerHTML = "";
+    state.cards.forEach((c,i)=>{ const card=document.createElement("div"); card.className="tcard flipped"; card.dataset.idx=i; card.innerHTML=cardHTML(c,i); area.appendChild(card); });
+    const slot = document.getElementById("toResultSlot");
+    const btn = document.createElement("button"); btn.className="btn btn-main"; btn.textContent="結果を読む"; btn.onclick=showResult; slot.appendChild(btn);
+  } else {
+    state.cards = [];
+    document.getElementById("drawLead").textContent = "深く息を吸って、心が整ったら。";
+    document.getElementById("drawStart").style.display = "block";
+  }
+}
+
+// 山札から3枚＋正逆
+function drawThreeCards() {
+  const positions = POS[state.spread].map(p=>p[0]);
+  const ids = Object.keys(cardMeanings);
+  const pool = ids.slice();
+  for (let i=pool.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [pool[i],pool[j]]=[pool[j],pool[i]]; }
+  const picks = pool.slice(0,3);
+  return positions.map((pos,i)=>({ id:picks[i], orientation: Math.random()<0.5?"upright":"reversed", position:pos }));
+}
+
+function imgPath(cardId){ return "images/"+cardId.split("_")[0]+"/"+cardId+".png"; }
+
+function cardHTML(c,i){
+  return '<div class="tcard-inner">'
+    + '<div class="tcard-face tcard-back"></div>'
+    + '<div class="tcard-face tcard-front"><img loading="lazy" src="'+imgPath(c.id)+'" alt="'+cardMeanings[c.id].name+'"'
+    + (c.orientation==="reversed"?' class="reversed"':'')+'></div></div>';
+}
+
+// ===== シャッフル → 配る =====
+function shuffleAndDeal() {
+  const db = loadDB();
+  const key = state.rkey || readingKey(state.spread, state.theme);
+  if (db.daily[key]) state.cards = db.daily[key].cards;
+  else { state.cards = drawThreeCards(); db.daily[key] = {cards:state.cards, theme:state.theme, question:state.question, ts:Date.now()}; saveDB(db); }
+  state.flipped = [false,false,false];
+
+  document.getElementById("drawStart").style.display = "none";
+  document.getElementById("drawLead").textContent = "カードを切っています…";
+  const area = document.getElementById("deckArea");
+  area.innerHTML = "";
+
+  setTimeout(()=>{
+    document.getElementById("drawLead").textContent = "気になるカードから、そっとめくってください。";
+    state.cards.forEach((c,i)=>{
+      const card=document.createElement("div");
+      card.className="tcard dealing"; card.dataset.idx=i;
+      card.innerHTML=cardHTML(c,i);
+      card.addEventListener("click",()=>flipCard(i));
+      area.appendChild(card);
+    });
+    document.getElementById("tapHint").textContent="（0 / 3 めくりました）";
+  }, 800);
+}
+
+// ===== めくる =====
+function flipCard(i) {
+  if (state.flipped[i]) return;
+  const el=document.querySelector('.tcard[data-idx="'+i+'"]');
+  el.classList.add("glow");
+  setTimeout(()=>el.classList.remove("glow"), 700);
+  el.classList.add("flipped");
+  state.flipped[i]=true;
+  const n=state.flipped.filter(Boolean).length;
+  document.getElementById("tapHint").textContent="（"+n+" / 3 めくりました）";
+  if (n===3) {
+    document.getElementById("tapHint").textContent="すべて、めくれました。";
+    const slot=document.getElementById("toResultSlot");
+    if (!slot.innerHTML) {
+      const btn=document.createElement("button");
+      btn.className="btn btn-main"; btn.textContent="結果を読む"; btn.onclick=showResult;
+      slot.appendChild(btn);
+    }
+  }
+}
+
+// ポジションフレーム合成は廃止。テーマ別カード解釈をそのまま表示する。
+function buildInterp(c) {
+  return cardMeanings[c.id][c.orientation].themes[state.theme];
+}
+function posTitle(spread,posKey){ return POS[spread].find(p=>p[0]===posKey)[1]; }
+
+// ===== 結果 =====
+function showResult() {
+  const sp = positionFrames[state.spread];
+  document.getElementById("resultSpreadLabel").textContent = sp.label;
+  document.getElementById("qQuote").innerHTML = state.question
+    ? '「<span class="q-text">'+escapeHTML(state.question)+'</span>」というご質問について、<br>3枚のカードがこのように示しています。'
+    : '<span class="q-text">今日のあなたに必要なメッセージ</span>として、<br>3枚のカードがこのように示しています。';
+
+  const box=document.getElementById("resultCards"); box.innerHTML="";
+  state.cards.forEach(c=>{
+    const m=cardMeanings[c.id]; const isRev=c.orientation==="reversed";
+    const div=document.createElement("div"); div.className="result-card";
+    div.innerHTML=
+      '<p class="rc-pos">'+posTitle(state.spread,c.position)+'</p>'
+      +'<div class="rc-imgwrap"><div class="rc-img" onclick="zoom(\''+imgPath(c.id)+'\','+isRev+')">'
+      +'<img loading="lazy" src="'+imgPath(c.id)+'" alt="'+m.name+'"'+(isRev?' class="reversed"':'')+'></div></div>'
+      +'<p class="rc-name">'+m.name+'</p>'
+      +'<span class="rc-orient">'+(isRev?'逆位置':'正位置')+'</span>'
+      +'<p class="rc-interp">'+buildInterp(c)+'</p>';
+    box.appendChild(div);
+  });
+
+  const s = generateSummary(state.cards, state.theme, state.question, state.spread);
+  const sumSec = (label,text) => '<div class="sum-sec"><h4>'+label+'</h4><p>'+escapeHTML(text)+'</p></div>';
+  document.getElementById("summaryText").innerHTML =
+      sumSec("質問への答え", s.answer)
+    + sumSec("3枚の流れ", s.flow)
+    + sumSec("今のあなたへ", s.advice)
+    + sumSec("明日からの小さな一歩", s.nextStep);
+  saveHistory();
+  go("result");
+}
+
+// 3枚から受け取れる方向性を、スプレッドの種類に応じて自然な総括として述べる。
+// キーワード羅列や機械的な合成は行わない。
+const SUMMARY_BY_SPREAD = {
+  past_present_future:
+    "3枚のカードは、これまで歩いてきた時間から今、そしてこれから訪れるものへと続く、ひとつの流れを映しているようです。"
+    + "今ここにあるものは、決して偶然ではなく、あなたが重ねてきた歩みの延長にあります。"
+    + "先のことばかりに気を取られず、今日できる小さなことを大切にしていけば、これからは少しずつ形になっていきます。",
+  cause_current_action:
+    "3枚のカードは、今の状況の奥にあるものから、これから踏み出せる一歩までを示しているようです。"
+    + "もやもやには必ず背景があり、それはあなただけのせいではありません。"
+    + "理由がそっと見えてくれば、次にできることも自然と浮かんできます。焦らず、手の届くところから始めてみてください。",
+  self_other_relation:
+    "3枚のカードは、あなた自身の気持ちと相手の心、そして二人の間にある関係を、やさしく映しているようです。"
+    + "相手の出方に一喜一憂しすぎず、まずはあなたの心が感じていることを大切にしてあげてください。"
+    + "関係は、どちらか一方ではなく、二人の間で少しずつ育っていくものです。"
+};
+// ===== 構造化総括（質問への答え／3枚の流れ／今のあなたへ／明日からの小さな一歩） =====
+// 「3枚の流れ」は実際に出た3枚のカード名＋キーワードから動的に生成（テンプレ羅列を避ける）。
+const FLOW = {
+  past_present_future: [
+    (n,k)=>"過去にあらわれた"+n+"は、「"+k+"」という流れがこれまでの土台にあったことを物語っています。",
+    (n,k)=>"現在を映す"+n+"は、今このタイミングで「"+k+"」があなたの中心にあることを示しています。",
+    (n,k)=>"未来を告げる"+n+"は、これから「"+k+"」へとつながる景色が広がっていきそうなことを伝えています。"
+  ],
+  cause_current_action: [
+    (n,k)=>"原因の位置にあらわれた"+n+"は、ものごとの奥に「"+k+"」があることを映し出しています。",
+    (n,k)=>"現状を映す"+n+"は、今は「"+k+"」があなたの状況の中心にあることを示しています。",
+    (n,k)=>"対策を告げる"+n+"は、「"+k+"」を手がかりに、次の一歩を選んでいけることを伝えています。"
+  ],
+  self_other_relation: [
+    (n,k)=>"あなた自身を映す"+n+"は、あなたの中に「"+k+"」という気持ちがあることを示しています。",
+    (n,k)=>"相手の心にあらわれた"+n+"は、相手の内側に「"+k+"」があることをそっと教えてくれています。",
+    (n,k)=>"二人の関係を映す"+n+"は、これから「"+k+"」が二人の間で育っていきそうなことを伝えています。"
+  ]
+};
+function cardKey2(c){ const kw=cardMeanings[c.id][c.orientation].keywords||[]; return (kw[0]||"")+(kw[1]?"・"+kw[1]:""); }
+// 3枚の流れの締め（スプレッド別の総合）
+const FLOW_CLOSE = {
+  past_present_future: "過去から未来へと続くこの三枚は、あなたが歩んできた道のりが、これからにちゃんとつながっていることを教えてくれています。",
+  cause_current_action: "原因から対策へと続くこの三枚は、今のもやもやが、これからの一歩へと変わっていける道筋をやさしく示してくれています。",
+  self_other_relation: "あなたと相手、そして二人の関係。この三枚は、気持ちのつながりが少しずつ育っていく過程を映してくれています。"
+};
+// 小さな一歩の締め
+const STEP_CLOSE = [
+  "どうか、頑張りすぎないでくださいね。",
+  "焦らず、あなたのペースで進んで大丈夫です。",
+  "うまくいかなくても、自分を責めないであげてください。",
+  "その小さな一歩が、きっとこれからのあなたを支えてくれます。"
+];
+function pick2(arr, seed){
+  if(arr.length<2) return arr[0]||"";
+  const i=hashStr(seed)%arr.length; let j=hashStr(seed+"x")%arr.length; if(j===i) j=(i+1)%arr.length;
+  return arr[i]+arr[j];
+}
+// 「今のあなたへ」への導入（占いの結果から、寄り添いの言葉へ橋渡し）
+const ADVICE_LEAD = [
+  "そして、カードの示す流れを超えて、あなたに伝えたいことがあります。",
+  "ここからは、占いの結果とあわせて、心に置いてもらえたらと思うことです。",
+  "結果がどうであっても、最後にこれだけは、お伝えさせてください。",
+  "カードの声に添えて、あなた自身へのメッセージとして受け取ってください。"
+];
+const FALLBACK_ADVICE =
+  "結果がどうであっても、あなたの価値は変わりません。うまくいかないことがあっても、それはあなたのせいではないのです。"
+  + "完璧を目指さず、60点で十分。比べるのは、まわりの誰かではなく昨日のあなただけで大丈夫です。"
+  + "しんどいときは、立ち止まって休んでいいのです。あなたには、どうか幸せでいてほしいと思います。";
+const FALLBACK_STEP =
+  "まずは今日できる、ほんの小さなことをひとつだけ選んでみてください。"
+  + "うまくやろうとしなくて大丈夫。やる気が出るのを待たず、手の届くところから、そっと始めてみましょう。";
+function generateSummary(cards, theme, question, spread){
+  const has = (typeof summaryTemplates!=="undefined");
+  const tmpl = has ? (summaryTemplates[theme] || summaryTemplates.general) : null;
+  const rkey = state.rkey || readingKey(spread, theme);
+  const qLabel = question
+    ? "「"+question+"」というご質問について、3枚のカードはこのように示しています。"
+    : "今日のあなたへ、3枚のカードはこのように示しています。";
+  const overview = (tmpl && tmpl.overview && tmpl.overview.length)
+    ? pickFrom(tmpl.overview, rkey+"o")
+    : (SUMMARY_BY_SPREAD[spread] || SUMMARY_BY_SPREAD.past_present_future);
+  const answer = qLabel + overview;
+  const frames = FLOW[spread] || FLOW.past_present_future;
+  const flow = cards.map((c,i)=> frames[i](cardMeanings[c.id].name, cardKey2(c))).join("") + (FLOW_CLOSE[spread] || "");
+  const advice = pickFrom(ADVICE_LEAD, rkey+"l")
+    + ((tmpl && tmpl.advice_options && tmpl.advice_options.length) ? pick2(tmpl.advice_options, rkey+"a") : FALLBACK_ADVICE);
+  const nextStep = ((tmpl && tmpl.next_step_options && tmpl.next_step_options.length) ? pickFrom(tmpl.next_step_options, rkey+"n") : FALLBACK_STEP)
+    + pickFrom(STEP_CLOSE, rkey+"c");
+  return { answer, flow, advice, nextStep };
+}
+
+// ===== 履歴（スプレッド×テーマ×日付の組み合わせで保存・表示） =====
+function saveHistory() {
+  const db=loadDB(); const key=state.rkey || readingKey(state.spread, state.theme);
+  const rec={ key, date:todayStr(), spread:state.spread, spreadLabel:positionFrames[state.spread].label,
+    question:state.question, theme:state.theme, cards:state.cards, ts:Date.now() };
+  const idx=db.history.findIndex(h=>h.key===key);
+  if (idx>=0) db.history[idx]=rec; else db.history.unshift(rec);
+  saveDB(db);
+}
+function openHistory() {
+  const db=loadDB(); const list=document.getElementById("historyList");
+  if (!db.history.length) {
+    list.innerHTML='<p class="empty">まだ、占った記録はないようです。<br>トップから、ゆっくり始めてみてください。</p>';
+  } else {
+    const sorted=db.history.slice().sort((a,b)=>b.ts-a.ts); list.innerHTML="";
+    sorted.forEach(h=>{
+      const names=h.cards.map(c=>cardMeanings[c.id].name+(c.orientation==="reversed"?"（逆）":"")).join(" ／ ");
+      const qline = h.question ? '<p class="hi-cards" style="color:var(--gold-d);">「'+escapeHTML(h.question)+'」</p>' : '';
+      const item=document.createElement("div"); item.className="hist-item";
+      item.innerHTML='<p class="hi-date">'+h.date+'</p><p class="hi-spread">'+h.spreadLabel+'</p>'+qline+'<p class="hi-cards">'+names+'</p>';
+      item.onclick=()=>showHistoryDetail(h); list.appendChild(item);
+    });
+  }
+  go("history");
+}
+function showHistoryDetail(h) {
+  state.spread=h.spread; state.question=h.question||""; state.theme=h.theme||detectTheme(state.question);
+  state.rkey=h.key || readingKey(state.spread, state.theme);
+  state.cards=h.cards; state.flipped=[true,true,true]; showResult();
+}
+
+// ===== 別のテーマで占う（トップの一段上＝スプレッド選択へ戻る） =====
+function goAnotherTheme(){ closeMenu(); go("spread"); }
+
+// ===== リセットメニュー =====
+function toggleMenu(e){ e.stopPropagation(); document.getElementById("resultMenu").classList.toggle("show"); }
+function closeMenu(){ const m=document.getElementById("resultMenu"); if(m) m.classList.remove("show"); }
+document.addEventListener("click", closeMenu);
+function resetToday(){
+  closeMenu();
+  if(!confirm("今日のリーディングをすべてリセットします。よろしいですか？\n（同じテーマでも、もう一度ひき直せるようになります）")) return;
+  const db=loadDB(); const today=todayStr();
+  Object.keys(db.daily).forEach(k=>{ if(k.indexOf(today+"|")===0) delete db.daily[k]; });
+  db.history = db.history.filter(h=>h.date!==today);
+  saveDB(db);
+  state.rkey=null; state.cards=[]; state.flipped=[false,false,false];
+  toast("今日のリーディングをリセットしました。");
+  go("spread");
+}
+
+// ===== Claude相談文 =====
+function buildConsultText() {
+  const sp=positionFrames[state.spread];
+  const q=state.question?state.question:"今日のあなたに必要なメッセージ";
+  let lines="";
+  state.cards.forEach(c=>{
+    const m=cardMeanings[c.id];
+    const interp=m[c.orientation].themes[state.theme];
+    lines+=posTitle(state.spread,c.position)+"："+m.name+"（"+(c.orientation==="reversed"?"逆":"正")+"）— "+interp+"\n";
+  });
+  return "タロットで以下の結果が出ました。あおいさん（占い好きな40代女性）の口調で、もう少し深く相談に乗ってください。\n\n"
+    +"質問：「"+q+"」\nスプレッド："+sp.label+"\n\n"+lines+"\n"
+    +"寄り添うトーンで、押し付けず、私の気持ちを受け止めながら、現実的なヒントを一緒に考えてくれると嬉しいです。";
+}
+function copyConsult() {
+  const text=buildConsultText();
+  const done=()=>toast("コピーしました。Claudeのチャットに貼ってお話ししてみてください。");
+  if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(text).then(done).catch(()=>fallbackCopy(text,done));
+  else fallbackCopy(text,done);
+}
+function fallbackCopy(text,done) {
+  const ta=document.createElement("textarea"); ta.value=text; ta.style.position="fixed"; ta.style.opacity="0";
+  document.body.appendChild(ta); ta.select();
+  try { document.execCommand("copy"); done(); } catch(e){ toast("コピーできませんでした。"); }
+  document.body.removeChild(ta);
+}
+
+// ===== トースト・モーダル・ユーティリティ =====
+let toastTimer=null;
+function toast(msg){ const t=document.getElementById("toast"); t.textContent=msg; t.classList.add("show"); clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove("show"),2800); }
+function zoom(src,isRev){ const m=document.getElementById("modal"),img=document.getElementById("modalImg"); img.src=src; img.className=isRev?"reversed":""; m.classList.add("show"); }
+function closeModal(){ document.getElementById("modal").classList.remove("show"); }
+function escapeHTML(s){ return s.replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c])); }
+</script>
+</body>
+</html>

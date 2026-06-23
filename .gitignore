@@ -1,0 +1,11 @@
+_bk/
+_proof/
+_exp/
+_genlogs/
+_screenshots/
+_screenshots_v*/
+_genlog_*.txt
+*.log
+.DS_Store
+*.tmp
+node_modules/
